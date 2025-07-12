@@ -1,5 +1,6 @@
 package com.android.challenge.fragments
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -67,7 +68,8 @@ class GalleryFragment : Fragment() {
     private fun startObserving() {
         val dirPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Challenge")
 
-        fileObserver = object : FileObserver(dirPath, CREATE or DELETE or MOVED_TO or MOVED_FROM) {
+        fileObserver = @SuppressLint("NewApi")
+        object : FileObserver(dirPath, CREATE or DELETE or MOVED_TO or MOVED_FROM) {
             override fun onEvent(event: Int, path: String?) {
                 if (path != null && path.endsWith(".mp4")) {
                     requireActivity().runOnUiThread {
