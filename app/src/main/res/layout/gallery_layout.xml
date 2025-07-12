@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/galleryRoot"
+    android:id="@+id/feedRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -8,9 +8,11 @@
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp" />
+        android:padding="8dp"
+        android:clipToPadding="false"
+        android:scrollbars="vertical" />
 
-    <!-- No Videos Layout -->
+    <!-- No Feed Layout -->
     <LinearLayout
         android:id="@+id/noVideosLayout"
         android:layout_width="match_parent"

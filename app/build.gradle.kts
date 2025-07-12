@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.kapt)
 }
 
 android {
@@ -40,7 +41,9 @@ android {
 }
 
 dependencies {
-
+    implementation(libs.glide)
+    kapt(libs.compiler)
+    implementation(libs.jsoup)
     implementation (libs.mp4composer.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

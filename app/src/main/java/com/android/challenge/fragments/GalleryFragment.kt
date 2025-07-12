@@ -53,7 +53,7 @@ class GalleryFragment : Fragment() {
     }
 
     private fun loadVideos() {
-        val dir = File(Environment.getExternalStorageDirectory(), "Challenge")
+        val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Challenge")
         if (dir.exists() && dir.isDirectory) {
             dir.listFiles()?.filter { it.name.endsWith(".mp4") }
                 ?.sortedByDescending { it.lastModified() }
@@ -65,7 +65,7 @@ class GalleryFragment : Fragment() {
     }
 
     private fun startObserving() {
-        val dirPath = File(Environment.getExternalStorageDirectory(), "Challenge").absolutePath
+        val dirPath = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Challenge")
 
         fileObserver = object : FileObserver(dirPath, CREATE or DELETE or MOVED_TO or MOVED_FROM) {
             override fun onEvent(event: Int, path: String?) {

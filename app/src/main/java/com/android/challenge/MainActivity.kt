@@ -122,10 +122,10 @@ class MainActivity : AppCompatActivity() {
                 currentPermissionIndex++
                 requestNextPermission()
             } else {
-                Toast.makeText(this, "Permission ${permissions[0]} is required.", Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this, "Permission ${permissions[0]} is required.", Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(this, "Permission request was interrupted or cancelled.", Toast.LENGTH_SHORT).show()
+           // Toast.makeText(this, "Permission request was interrupted or cancelled.", Toast.LENGTH_SHORT).show()
         }
     }
 }
