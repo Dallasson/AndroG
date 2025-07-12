@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Android Engineering Challenge</string>
+    <string name="no_videos_found">No videos found</string>
 </resources>

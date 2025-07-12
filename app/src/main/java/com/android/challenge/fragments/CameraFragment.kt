@@ -46,7 +46,11 @@ class CameraFragment : Fragment() {
     private var isRecording = false
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         binding = CameraLayoutBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -74,8 +78,14 @@ class CameraFragment : Fragment() {
     }
 
     private fun startDualRecording() {
-        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             Toast.makeText(requireContext(), "Permissions not granted", Toast.LENGTH_SHORT).show()
             return
@@ -83,10 +93,14 @@ class CameraFragment : Fragment() {
 
         setupRecorders()
 
+        // Front Camera Setup
         openCamera(frontCameraId!!) { camera ->
             frontDevice = camera
             val texture = binding.frontPreview.surfaceTexture!!
             texture.setDefaultBufferSize(1920, 1080)
+
+            binding.frontPreview.scaleX = -1f // ✅ Flip horizontally for mirror effect
+
             frontPreviewSurface = Surface(texture)
             frontRecordSurface = frontRecorder.surface
 
@@ -95,17 +109,22 @@ class CameraFragment : Fragment() {
                 addTarget(frontRecordSurface)
             }
 
-            camera.createCaptureSession(listOf(frontPreviewSurface, frontRecordSurface),
+            camera.createCaptureSession(
+                listOf(frontPreviewSurface, frontRecordSurface),
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         frontCaptureSession = session
                         session.setRepeatingRequest(request.build(), null, null)
                         frontRecorder.start()
                     }
+
                     override fun onConfigureFailed(session: CameraCaptureSession) {}
-                }, null)
+                },
+                null
+            )
         }
 
+        // Back Camera Setup
         openCamera(backCameraId!!) { camera ->
             backDevice = camera
             val texture = binding.backPreview.surfaceTexture!!
@@ -118,15 +137,19 @@ class CameraFragment : Fragment() {
                 addTarget(backRecordSurface)
             }
 
-            camera.createCaptureSession(listOf(backPreviewSurface, backRecordSurface),
+            camera.createCaptureSession(
+                listOf(backPreviewSurface, backRecordSurface),
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         backCaptureSession = session
                         session.setRepeatingRequest(request.build(), null, null)
                         backRecorder.start()
                     }
+
                     override fun onConfigureFailed(session: CameraCaptureSession) {}
-                }, null)
+                },
+                null
+            )
         }
 
         isRecording = true

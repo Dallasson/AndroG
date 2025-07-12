@@ -9,8 +9,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import com.android.challenge.R
-import com.android.challenge.databinding.GalleryLayoutBinding
 import com.android.challenge.adapters.VideoAdapter
+import com.android.challenge.databinding.GalleryLayoutBinding
 import java.io.File
 
 class GalleryFragment : Fragment() {
@@ -18,7 +18,9 @@ class GalleryFragment : Fragment() {
     private val videoList = mutableListOf<File>()
     private lateinit var binding: GalleryLayoutBinding
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         binding = GalleryLayoutBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -28,9 +30,17 @@ class GalleryFragment : Fragment() {
 
         binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
         loadVideos()
-        binding.recyclerView.adapter = VideoAdapter(videoList) { uri ->
-            val dialog = VideoPlayerDialogFragment.newInstance(uri)
-            dialog.show(parentFragmentManager, "fullscreen_video")
+
+        if (videoList.isEmpty()) {
+            binding.recyclerView.visibility = View.GONE
+            binding.noVideosLayout.visibility = View.VISIBLE
+        } else {
+            binding.recyclerView.adapter = VideoAdapter(videoList) { uri ->
+                val dialog = VideoPlayerDialogFragment.newInstance(uri)
+                dialog.show(parentFragmentManager, "fullscreen_video")
+            }
+            binding.recyclerView.visibility = View.VISIBLE
+            binding.noVideosLayout.visibility = View.GONE
         }
     }
 
@@ -60,7 +70,9 @@ class GalleryFragment : Fragment() {
             }
         }
 
-        override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        override fun onCreateView(
+            inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+        ): View? {
             val view = inflater.inflate(R.layout.dialog_fullscreen_video, container, false)
             val videoView = view.findViewById<android.widget.VideoView>(R.id.fullscreenVideoView)
             val uri = arguments?.getParcelable<Uri>(ARG_URI)
@@ -77,7 +89,10 @@ class GalleryFragment : Fragment() {
 
         override fun onStart() {
             super.onStart()
-            dialog?.window?.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+            dialog?.window?.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
         }
     }
 }
