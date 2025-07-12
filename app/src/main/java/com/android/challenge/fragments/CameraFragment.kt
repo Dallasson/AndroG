@@ -1,18 +1,14 @@
-// CameraFragment.kt
 package com.android.challenge.fragments
 
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.media.MediaRecorder
 import android.os.*
-import android.util.Size
 import android.view.LayoutInflater
 import android.view.Surface
-import android.view.TextureView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -57,7 +53,6 @@ class CameraFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
         findCameraIds()
 
@@ -71,8 +66,7 @@ class CameraFragment : Fragment() {
     private fun findCameraIds() {
         for (id in cameraManager.cameraIdList) {
             val characteristics = cameraManager.getCameraCharacteristics(id)
-            val lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
-            when (lensFacing) {
+            when (characteristics.get(CameraCharacteristics.LENS_FACING)) {
                 CameraCharacteristics.LENS_FACING_BACK -> backCameraId = id
                 CameraCharacteristics.LENS_FACING_FRONT -> frontCameraId = id
             }
@@ -91,46 +85,46 @@ class CameraFragment : Fragment() {
 
         openCamera(frontCameraId!!) { camera ->
             frontDevice = camera
-            val frontSurfaceTexture = binding.frontPreview.surfaceTexture!!
-            frontSurfaceTexture.setDefaultBufferSize(1920, 1080)
-            frontPreviewSurface = Surface(frontSurfaceTexture)
+            val texture = binding.frontPreview.surfaceTexture!!
+            texture.setDefaultBufferSize(1920, 1080)
+            frontPreviewSurface = Surface(texture)
             frontRecordSurface = frontRecorder.surface
 
-            val requestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-            requestBuilder.addTarget(frontPreviewSurface)
-            requestBuilder.addTarget(frontRecordSurface)
+            val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+                addTarget(frontPreviewSurface)
+                addTarget(frontRecordSurface)
+            }
 
             camera.createCaptureSession(listOf(frontPreviewSurface, frontRecordSurface),
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         frontCaptureSession = session
-                        session.setRepeatingRequest(requestBuilder.build(), null, null)
+                        session.setRepeatingRequest(request.build(), null, null)
                         frontRecorder.start()
                     }
-
                     override fun onConfigureFailed(session: CameraCaptureSession) {}
                 }, null)
         }
 
         openCamera(backCameraId!!) { camera ->
             backDevice = camera
-            val backSurfaceTexture = binding.backPreview.surfaceTexture!!
-            backSurfaceTexture.setDefaultBufferSize(1920, 1080)
-            backPreviewSurface = Surface(backSurfaceTexture)
+            val texture = binding.backPreview.surfaceTexture!!
+            texture.setDefaultBufferSize(1920, 1080)
+            backPreviewSurface = Surface(texture)
             backRecordSurface = backRecorder.surface
 
-            val requestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-            requestBuilder.addTarget(backPreviewSurface)
-            requestBuilder.addTarget(backRecordSurface)
+            val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+                addTarget(backPreviewSurface)
+                addTarget(backRecordSurface)
+            }
 
             camera.createCaptureSession(listOf(backPreviewSurface, backRecordSurface),
                 object : CameraCaptureSession.StateCallback() {
                     override fun onConfigured(session: CameraCaptureSession) {
                         backCaptureSession = session
-                        session.setRepeatingRequest(requestBuilder.build(), null, null)
+                        session.setRepeatingRequest(request.build(), null, null)
                         backRecorder.start()
                     }
-
                     override fun onConfigureFailed(session: CameraCaptureSession) {}
                 }, null)
         }
@@ -138,37 +132,48 @@ class CameraFragment : Fragment() {
         isRecording = true
         Toast.makeText(requireContext(), "Recording started", Toast.LENGTH_SHORT).show()
 
+        var timeLeft = 15
+        binding.recordButton.text = timeLeft.toString()
+        val countdown = object : Runnable {
+            override fun run() {
+                timeLeft--
+                binding.recordButton.text = timeLeft.toString()
+                if (timeLeft > 0) handler.postDelayed(this, 1000)
+            }
+        }
+        handler.postDelayed(countdown, 1000)
+
         handler.postDelayed({
             stopDualRecording()
         }, 15_000)
     }
 
     private fun setupRecorders() {
-        frontRecorder = MediaRecorder()
-        val frontFile = createVideoFile("front")
-        frontRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-        frontRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-        frontRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-        frontRecorder.setOutputFile(frontFile.absolutePath)
-        frontRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-        frontRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-        frontRecorder.setVideoEncodingBitRate(10000000)
-        frontRecorder.setVideoFrameRate(30)
-        frontRecorder.setVideoSize(1920, 1080)
-        frontRecorder.prepare()
+        frontRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setOutputFile(createVideoFile("front").absolutePath)
+            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setVideoEncodingBitRate(10000000)
+            setVideoFrameRate(30)
+            setVideoSize(1920, 1080)
+            prepare()
+        }
 
-        backRecorder = MediaRecorder()
-        val backFile = createVideoFile("back")
-        backRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-        backRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
-        backRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-        backRecorder.setOutputFile(backFile.absolutePath)
-        backRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-        backRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-        backRecorder.setVideoEncodingBitRate(10000000)
-        backRecorder.setVideoFrameRate(30)
-        backRecorder.setVideoSize(1920, 1080)
-        backRecorder.prepare()
+        backRecorder = MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setOutputFile(createVideoFile("back").absolutePath)
+            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setVideoEncodingBitRate(10000000)
+            setVideoFrameRate(30)
+            setVideoSize(1920, 1080)
+            prepare()
+        }
     }
 
     private fun stopDualRecording() {
@@ -186,31 +191,23 @@ class CameraFragment : Fragment() {
         }
 
         Toast.makeText(requireContext(), "Recording finished", Toast.LENGTH_SHORT).show()
-
         activity?.findViewById<ViewPager2>(R.id.viewPager)?.currentItem = 2
     }
 
     @SuppressLint("MissingPermission")
     private fun openCamera(cameraId: String, callback: (CameraDevice) -> Unit) {
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
-            override fun onOpened(camera: CameraDevice) {
-                callback(camera)
-            }
-
-            override fun onDisconnected(camera: CameraDevice) {
-                camera.close()
-            }
-
-            override fun onError(camera: CameraDevice, error: Int) {
-                camera.close()
-            }
+            override fun onOpened(camera: CameraDevice) = callback(camera)
+            override fun onDisconnected(camera: CameraDevice) = camera.close()
+            override fun onError(camera: CameraDevice, error: Int) = camera.close()
         }, null)
     }
 
     private fun createVideoFile(tag: String): File {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val fileName = "VID_${tag}_$timeStamp.mp4"
-        val storageDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_MOVIES)
+        val storageDir = File(Environment.getExternalStorageDirectory(), "Challenge")
+        if (!storageDir.exists()) storageDir.mkdirs()
         return File(storageDir, fileName)
     }
 }
