@@ -17,6 +17,9 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.widget.ViewPager2
 import com.android.challenge.R
 import com.android.challenge.databinding.CameraLayoutBinding
+import com.daasuu.mp4compose.FillMode
+import com.daasuu.mp4compose.Rotation
+import com.daasuu.mp4compose.composer.Mp4Composer
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,6 +48,9 @@ class CameraFragment : Fragment() {
 
     private var isRecording = false
     private val handler = Handler(Looper.getMainLooper())
+
+    private lateinit var frontOutputFile: File
+    private lateinit var backOutputFile: File
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -78,14 +84,8 @@ class CameraFragment : Fragment() {
     }
 
     private fun startDualRecording() {
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.CAMERA
-            ) != PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
+        if (ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
         ) {
             Toast.makeText(requireContext(), "Permissions not granted", Toast.LENGTH_SHORT).show()
             return
@@ -93,13 +93,11 @@ class CameraFragment : Fragment() {
 
         setupRecorders()
 
-        // Front Camera Setup
         openCamera(frontCameraId!!) { camera ->
             frontDevice = camera
             val texture = binding.frontPreview.surfaceTexture!!
             texture.setDefaultBufferSize(1920, 1080)
-
-            binding.frontPreview.scaleX = -1f // ✅ Flip horizontally for mirror effect
+            binding.frontPreview.scaleX = -1f // Mirror the preview
 
             frontPreviewSurface = Surface(texture)
             frontRecordSurface = frontRecorder.surface
@@ -124,11 +122,11 @@ class CameraFragment : Fragment() {
             )
         }
 
-        // Back Camera Setup
         openCamera(backCameraId!!) { camera ->
             backDevice = camera
             val texture = binding.backPreview.surfaceTexture!!
             texture.setDefaultBufferSize(1920, 1080)
+
             backPreviewSurface = Surface(texture)
             backRecordSurface = backRecorder.surface
 
@@ -172,11 +170,14 @@ class CameraFragment : Fragment() {
     }
 
     private fun setupRecorders() {
+        frontOutputFile = createVideoFile("front")
+        backOutputFile = createVideoFile("back")
+
         frontRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setOutputFile(createVideoFile("front").absolutePath)
+            setOutputFile(frontOutputFile.absolutePath)
             setVideoEncoder(MediaRecorder.VideoEncoder.H264)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setVideoEncodingBitRate(10000000)
@@ -189,7 +190,7 @@ class CameraFragment : Fragment() {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setOutputFile(createVideoFile("back").absolutePath)
+            setOutputFile(backOutputFile.absolutePath)
             setVideoEncoder(MediaRecorder.VideoEncoder.H264)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
             setVideoEncodingBitRate(10000000)
@@ -213,9 +214,43 @@ class CameraFragment : Fragment() {
             backDevice?.close()
         }
 
-        Toast.makeText(requireContext(), "Recording finished", Toast.LENGTH_SHORT).show()
-        activity?.findViewById<ViewPager2>(R.id.viewPager)?.currentItem = 2
+        val flippedFront = File(frontOutputFile.parent, "flipped_front_${frontOutputFile.name}")
+
+        Mp4Composer(frontOutputFile.absolutePath, flippedFront.absolutePath)
+            .rotation(Rotation.ROTATION_270)
+            .fillMode(FillMode.PRESERVE_ASPECT_FIT)
+            .flipHorizontal(true)
+            .listener(object : Mp4Composer.Listener {
+                override fun onProgress(progress: Double) {
+                    // Optionally update UI with progress
+                }
+
+                override fun onCurrentWrittenVideoTime(timeUs: Long) {}
+
+                override fun onCanceled() {}
+
+                override fun onCompleted() {
+                    requireActivity().runOnUiThread {
+                        if (frontOutputFile.exists()) {
+                            frontOutputFile.delete()
+                        }
+
+                        Toast.makeText(requireContext(), "Recording finished and front video flipped!", Toast.LENGTH_SHORT).show()
+                        activity?.findViewById<ViewPager2>(R.id.viewPager)?.currentItem = 2
+                    }
+                }
+
+                override fun onFailed(exception: java.lang.Exception?) {
+                    requireActivity().runOnUiThread {
+                        Toast.makeText(requireContext(), "Failed to flip video", Toast.LENGTH_SHORT).show()
+                        activity?.findViewById<ViewPager2>(R.id.viewPager)?.currentItem = 2
+                    }
+                }
+
+            })
+            .start()
     }
+
 
     @SuppressLint("MissingPermission")
     private fun openCamera(cameraId: String, callback: (CameraDevice) -> Unit) {

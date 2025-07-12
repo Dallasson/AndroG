@@ -3,9 +3,11 @@ package com.android.challenge.fragments
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.os.FileObserver
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.VideoView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import com.android.challenge.R
@@ -17,6 +19,7 @@ class GalleryFragment : Fragment() {
 
     private val videoList = mutableListOf<File>()
     private lateinit var binding: GalleryLayoutBinding
+    private var fileObserver: FileObserver? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -29,8 +32,13 @@ class GalleryFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-        loadVideos()
 
+        loadVideos()
+        setupRecyclerView()
+        startObserving()
+    }
+
+    private fun setupRecyclerView() {
         if (videoList.isEmpty()) {
             binding.recyclerView.visibility = View.GONE
             binding.noVideosLayout.visibility = View.VISIBLE
@@ -56,6 +64,29 @@ class GalleryFragment : Fragment() {
         }
     }
 
+    private fun startObserving() {
+        val dirPath = File(Environment.getExternalStorageDirectory(), "Challenge").absolutePath
+
+        fileObserver = object : FileObserver(dirPath, CREATE or DELETE or MOVED_TO or MOVED_FROM) {
+            override fun onEvent(event: Int, path: String?) {
+                if (path != null && path.endsWith(".mp4")) {
+                    requireActivity().runOnUiThread {
+                        loadVideos()
+                        setupRecyclerView()
+                        binding.recyclerView.adapter?.notifyDataSetChanged()
+                    }
+                }
+            }
+        }
+        fileObserver?.startWatching()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        fileObserver?.stopWatching()
+        fileObserver = null
+    }
+
     class VideoPlayerDialogFragment : androidx.fragment.app.DialogFragment() {
 
         companion object {
@@ -74,7 +105,7 @@ class GalleryFragment : Fragment() {
             inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
         ): View? {
             val view = inflater.inflate(R.layout.dialog_fullscreen_video, container, false)
-            val videoView = view.findViewById<android.widget.VideoView>(R.id.fullscreenVideoView)
+            val videoView = view.findViewById<VideoView>(R.id.fullscreenVideoView)
             val uri = arguments?.getParcelable<Uri>(ARG_URI)
             uri?.let {
                 videoView.setVideoURI(it)
