@@ -10,8 +10,8 @@ class JellyRepositoryImpl @Inject constructor(
     private val api: JellyApi
 ) : JellyRepository {
 
-    override fun getFeed(): Flow<JellyApiResponse> = flow {
-        val response = api.getFeed()
-        emit(response) // assuming JellyApiResponse.videos exists
+    override fun getFeed(limit : Int , page : Int): Flow<JellyApiResponse> = flow {
+        val response = api.getFeed(limit,page)
+        emit(response)
     }
 }

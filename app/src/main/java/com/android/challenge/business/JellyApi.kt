@@ -7,7 +7,7 @@ import retrofit2.http.Query
 interface JellyApi {
     @GET("feed")
     suspend fun getFeed(
-        @Query("limit") limit: Int = 52,
-        @Query("page") page: Int = 1
+        @Query("limit") limit: Int,
+        @Query("page") page: Int
     ): JellyApiResponse
 }

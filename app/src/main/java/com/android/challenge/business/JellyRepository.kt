@@ -5,5 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface JellyRepository {
 
-    fun getFeed(): Flow<JellyApiResponse>
+    fun getFeed(limit : Int , page : Int): Flow<JellyApiResponse>
 }

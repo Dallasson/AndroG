@@ -21,13 +21,11 @@ class JellyViewModel @Inject constructor(
     private val _videos = MutableStateFlow<JellyApiResponse?>(null)
     val videos: StateFlow<JellyApiResponse?> = _videos.asStateFlow()
 
-    init {
-        loadVideos()
-    }
 
-    private fun loadVideos() {
+
+    fun loadVideos(limit : Int , page : Int) {
         viewModelScope.launch {
-            repository.getFeed()
+            repository.getFeed(limit,page)
                 .catch { e ->
                     _videos.value = null
                 }
