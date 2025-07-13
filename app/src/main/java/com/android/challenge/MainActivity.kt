@@ -9,15 +9,18 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
+import android.view.View
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.viewpager2.widget.ViewPager2
 import com.android.challenge.adapters.TabAdapter
+import com.android.challenge.fragments.FeedFragment
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,12 +30,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tabLayout: TabLayout
     private lateinit var viewPager: ViewPager2
+    private var currentFragment: Fragment? = null
 
     private val requiredPermissions = listOf(
         Manifest.permission.CAMERA,
         Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        Manifest.permission.READ_EXTERNAL_STORAGE
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
 
     private var currentPermissionIndex = 0
@@ -40,8 +44,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -53,6 +57,34 @@ class MainActivity : AppCompatActivity() {
 
         val adapter = TabAdapter(this)
         viewPager.adapter = adapter
+
+        // Monitor active fragment
+        supportFragmentManager.registerFragmentLifecycleCallbacks(object :
+            FragmentManager.FragmentLifecycleCallbacks() {
+            override fun onFragmentViewCreated(
+                fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?
+            ) {
+                if (f is FeedFragment) {
+                    currentFragment = f
+                }
+            }
+        }, true)
+
+        // Tab change listener for pausing/resuming Feed video
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+
+                val fragment = supportFragmentManager.findFragmentByTag("f$position")
+                if (position == 0 && fragment is FeedFragment) {
+                    currentFragment = fragment
+                    fragment.resumeCurrentVideo()
+                } else {
+                    val feedFragment = supportFragmentManager.findFragmentByTag("f0") as? FeedFragment
+                    feedFragment?.pauseCurrentVideo()
+                }
+            }
+        })
 
         TabLayoutMediator(tabLayout, viewPager) { tab, position ->
             tab.text = when (position) {
@@ -66,6 +98,26 @@ class MainActivity : AppCompatActivity() {
         requestAllFileAccessPermissionFirst()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (!isStoragePermissionChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            isStoragePermissionChecked = Environment.isExternalStorageManager()
+            if (isStoragePermissionChecked) {
+                requestNextPermission()
+            }
+        }
+
+        if (viewPager.currentItem == 0) {
+            (currentFragment as? FeedFragment)?.resumeCurrentVideo()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        (currentFragment as? FeedFragment)?.pauseCurrentVideo()
+    }
+
+    // File access permission
     private fun requestAllFileAccessPermissionFirst() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
             try {
@@ -87,11 +139,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestNextPermission() {
-        if (!isStoragePermissionChecked) return // wait until storage permission is handled
-
-        if (currentPermissionIndex >= requiredPermissions.size) {
-            return // All permissions granted
-        }
+        if (!isStoragePermissionChecked) return
+        if (currentPermissionIndex >= requiredPermissions.size) return
 
         val permission = requiredPermissions[currentPermissionIndex]
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
@@ -102,32 +151,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (!isStoragePermissionChecked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            isStoragePermissionChecked = Environment.isExternalStorageManager()
-            if (isStoragePermissionChecked) {
-                requestNextPermission()
-            }
-        }
-    }
-
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
         if (permissions.isNotEmpty() && grantResults.isNotEmpty()) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 currentPermissionIndex++
                 requestNextPermission()
             } else {
-                //Toast.makeText(this, "Permission ${permissions[0]} is required.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Permission ${permissions[0]} is required.", Toast.LENGTH_SHORT).show()
             }
         } else {
-           // Toast.makeText(this, "Permission request was interrupted or cancelled.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Permission request interrupted.", Toast.LENGTH_SHORT).show()
         }
     }
 }
