@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.google.gms.google.services)
+    alias(libs.plugins.hilt.android)
 }
 
 android {
@@ -52,6 +53,12 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.fragment.ktx)
+    implementation (libs.hilt.android)
+    kapt (libs.hilt.compiler)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
     implementation(libs.ffmpeg.kit.full)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)

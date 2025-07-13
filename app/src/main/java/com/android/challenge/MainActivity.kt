@@ -20,7 +20,9 @@ import androidx.viewpager2.widget.ViewPager2
 import com.android.challenge.adapters.TabAdapter
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var tabLayout: TabLayout

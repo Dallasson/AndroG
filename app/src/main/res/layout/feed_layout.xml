@@ -6,87 +6,12 @@
     android:layout_height="match_parent"
     android:background="#000">
 
-    <!-- ExoPlayer View -->
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/playerView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:keepScreenOn="true" />
-
-    <!-- View count -->
-    <TextView
-        android:id="@+id/viewCountText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0 views"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:background="@android:color/black"
+        android:clipToPadding="false"
         android:padding="8dp"
-        android:layout_margin="16dp"
-        android:layout_gravity="top|start" />
-
-    <TextView
-        android:id="@+id/label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="0 views"
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:background="@android:color/black"
-        android:padding="8dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="70dp"
-        android:layout_gravity="top|start" />
-
-
-    <!-- Next Button -->
-    <ImageButton
-        android:id="@+id/nextButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center|end"
-        android:layout_marginEnd="16dp"
-        android:background="@android:color/transparent"
-        android:src="@android:drawable/ic_media_next"
-        app:tint="#FFFFFF" />
-
-    <!-- Prev Button -->
-    <ImageButton
-        android:id="@+id/prevButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center|start"
-        android:layout_marginStart="16dp"
-        android:background="@android:color/transparent"
-        android:src="@android:drawable/ic_media_previous"
-        app:tint="#FFFFFF" />
-
-    <!-- No videos layout -->
-    <LinearLayout
-        android:id="@+id/noVideosLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:visibility="gone"
-        android:padding="24dp">
-
-        <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:src="@drawable/no_video"
-            android:contentDescription="@string/no_videos_found" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/no_videos_found"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:paddingTop="16dp"
-            android:textColor="@android:color/darker_gray" />
-    </LinearLayout>
+        android:scrollbars="vertical" />
 
 </FrameLayout>

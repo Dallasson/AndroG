@@ -6,11 +6,21 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
-import android.hardware.camera2.*
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraDevice
+import android.hardware.camera2.CameraManager
 import android.media.MediaRecorder
-import android.os.*
+import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Surface
+import android.view.TextureView
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -19,17 +29,11 @@ import androidx.viewpager2.widget.ViewPager2
 import com.android.challenge.R
 import com.android.challenge.databinding.CameraLayoutBinding
 import com.arthenica.ffmpegkit.FFmpegKit
-import com.daasuu.mp4compose.FillMode
-import com.daasuu.mp4compose.Rotation
-import com.daasuu.mp4compose.composer.Mp4Composer
-import com.google.firebase.Firebase
 import com.google.firebase.database.FirebaseDatabase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class CameraFragment : Fragment() {
 
