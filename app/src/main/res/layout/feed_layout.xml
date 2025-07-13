@@ -1,18 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/feedRoot"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#000">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <!-- ExoPlayer View -->
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
-        android:clipToPadding="false"
-        android:scrollbars="vertical" />
+        android:keepScreenOn="true" />
 
-    <!-- No Feed Layout -->
+    <!-- View count -->
+    <TextView
+        android:id="@+id/viewCountText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 views"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:background="@android:color/black"
+        android:padding="8dp"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|start" />
+
+    <TextView
+        android:id="@+id/label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0 views"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:background="@android:color/black"
+        android:padding="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="70dp"
+        android:layout_gravity="top|start" />
+
+
+    <!-- Next Button -->
+    <ImageButton
+        android:id="@+id/nextButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center|end"
+        android:layout_marginEnd="16dp"
+        android:background="@android:color/transparent"
+        android:src="@android:drawable/ic_media_next"
+        app:tint="#FFFFFF" />
+
+    <!-- Prev Button -->
+    <ImageButton
+        android:id="@+id/prevButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center|start"
+        android:layout_marginStart="16dp"
+        android:background="@android:color/transparent"
+        android:src="@android:drawable/ic_media_previous"
+        app:tint="#FFFFFF" />
+
+    <!-- No videos layout -->
     <LinearLayout
         android:id="@+id/noVideosLayout"
         android:layout_width="match_parent"

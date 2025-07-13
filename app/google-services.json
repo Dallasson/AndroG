@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "37127412605",
+    "firebase_url": "https://challenge-43232-default-rtdb.firebaseio.com",
+    "project_id": "challenge-43232",
+    "storage_bucket": "challenge-43232.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:37127412605:android:cf803b4ef59183ecd48a14",
+        "android_client_info": {
+          "package_name": "com.android.challenge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCskkwHS5zc5Re6Z2-oNphx4ilK03C3prY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -89,43 +89,5 @@ class GalleryFragment : Fragment() {
         fileObserver = null
     }
 
-    class VideoPlayerDialogFragment : androidx.fragment.app.DialogFragment() {
 
-        companion object {
-            private const val ARG_URI = "video_uri"
-
-            fun newInstance(uri: Uri): VideoPlayerDialogFragment {
-                val fragment = VideoPlayerDialogFragment()
-                val args = Bundle()
-                args.putParcelable(ARG_URI, uri)
-                fragment.arguments = args
-                return fragment
-            }
-        }
-
-        override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-        ): View? {
-            val view = inflater.inflate(R.layout.dialog_fullscreen_video, container, false)
-            val videoView = view.findViewById<VideoView>(R.id.fullscreenVideoView)
-            val uri = arguments?.getParcelable<Uri>(ARG_URI)
-            uri?.let {
-                videoView.setVideoURI(it)
-                videoView.setOnPreparedListener { player ->
-                    player.isLooping = true
-                    player.start()
-                }
-            }
-            view.setOnClickListener { dismiss() }
-            return view
-        }
-
-        override fun onStart() {
-            super.onStart()
-            dialog?.window?.setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        }
-    }
 }

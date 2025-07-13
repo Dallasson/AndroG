@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -20,6 +21,16 @@ android {
 
     buildFeatures {
         viewBinding = true 
+    }
+
+    android {
+        defaultConfig {
+            ndk {
+                abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+            }
+        }
+
+        sourceSets["main"].jniLibs.srcDirs("src/main/jniLibs")
     }
 
     buildTypes {
@@ -41,8 +52,9 @@ android {
 }
 
 dependencies {
-    implementation(libs.glide)
-    kapt(libs.compiler)
+    implementation(libs.ffmpeg.kit.full)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.ui)
     implementation(libs.jsoup)
     implementation (libs.mp4composer.android)
     implementation(libs.androidx.core.ktx)
@@ -50,6 +62,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.material3.android)
+    implementation(libs.firebase.database)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

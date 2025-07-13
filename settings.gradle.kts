@@ -11,6 +11,11 @@ pluginManagement {
         gradlePluginPortal()
         maven {   url= uri("https://jitpack.io") }
     }
+    repositories {
+        flatDir {
+            dirs("libs")
+        }
+    }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
