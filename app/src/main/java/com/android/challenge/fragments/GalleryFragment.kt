@@ -1,17 +1,14 @@
 package com.android.challenge.fragments
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.os.FileObserver
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.VideoView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
-import com.android.challenge.R
 import com.android.challenge.adapters.VideoAdapter
 import com.android.challenge.databinding.GalleryLayoutBinding
 import java.io.File
@@ -70,6 +67,7 @@ class GalleryFragment : Fragment() {
 
         fileObserver = @SuppressLint("NewApi")
         object : FileObserver(dirPath, CREATE or DELETE or MOVED_TO or MOVED_FROM) {
+            @SuppressLint("NotifyDataSetChanged")
             override fun onEvent(event: Int, path: String?) {
                 if (path != null && path.endsWith(".mp4")) {
                     requireActivity().runOnUiThread {

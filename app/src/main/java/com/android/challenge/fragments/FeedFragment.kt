@@ -1,4 +1,4 @@
-// FeedFragment.kt
+
 package com.android.challenge.fragments
 
 import android.os.Bundle
@@ -20,7 +20,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.android.challenge.adapters.FeedPagerAdapter
 import com.android.challenge.business.JellyViewModel
 import com.android.challenge.databinding.FeedLayoutBinding
-import com.android.challenge.models.FeedItem
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 

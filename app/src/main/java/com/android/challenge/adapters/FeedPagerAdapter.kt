@@ -1,4 +1,4 @@
-// FeedPagerAdapter.kt
+
 package com.android.challenge.adapters
 
 import android.content.*
@@ -50,10 +50,6 @@ class FeedPagerAdapter(
         sharedPlayer.playWhenReady = false
     }
 
-    fun resumeCurrentPlayer() {
-        sharedPlayer.playWhenReady = true
-    }
-
     fun releasePlayer() {
         sharedPlayer.release()
     }
@@ -74,8 +70,8 @@ class FeedPagerAdapter(
 
     inner class FeedViewHolder(val binding: FeedItemLayoutBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: FeedItem) {
-            binding.viewsText.text = "${item.jelly.all_views} views"
-            binding.username.text = "@${item.jelly.participants.firstOrNull()?.username ?: "Unknown"}"
+            "${item.jelly.all_views} views".also { binding.viewsText.text = it }
+            "@${item.jelly.participants.firstOrNull()?.username ?: "Unknown"}".also { binding.username.text = it }
 
             binding.btnVolume.setOnClickListener {
                 val isMuted = sharedPlayer.volume == 0f

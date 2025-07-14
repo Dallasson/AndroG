@@ -27,7 +27,7 @@ android {
     android {
         defaultConfig {
             ndk {
-                abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+                abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86" ,"x86_64")
             }
         }
 
@@ -62,8 +62,6 @@ dependencies {
     implementation(libs.ffmpeg.kit.full)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
-    implementation(libs.jsoup)
-    implementation (libs.mp4composer.android)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)

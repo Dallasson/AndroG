@@ -26,7 +26,6 @@ class VideoPlayerDialogFragment : DialogFragment() {
         }
     }
 
-    // ✅ Set a style that removes the title bar and frame for a true fullscreen experience.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NO_FRAME, android.R.style.Theme_Black_NoTitleBar_Fullscreen)
@@ -35,7 +34,6 @@ class VideoPlayerDialogFragment : DialogFragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
-        // The rest of your onCreateView logic is correct.
         val view = inflater.inflate(R.layout.dialog_fullscreen_video, container, false)
         val videoView = view.findViewById<VideoView>(R.id.fullscreenVideoView)
         val uri = arguments?.getParcelable<Uri>(ARG_URI)
@@ -53,8 +51,6 @@ class VideoPlayerDialogFragment : DialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         val window = dialog?.window ?: return
-
-        // Use WindowInsetsController to hide system bars
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())

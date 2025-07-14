@@ -4,16 +4,17 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
@@ -44,6 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
@@ -58,7 +60,6 @@ class MainActivity : AppCompatActivity() {
         val adapter = TabAdapter(this)
         viewPager.adapter = adapter
 
-        // Monitor active fragment
         supportFragmentManager.registerFragmentLifecycleCallbacks(object :
             FragmentManager.FragmentLifecycleCallbacks() {
             override fun onFragmentViewCreated(
@@ -70,7 +71,6 @@ class MainActivity : AppCompatActivity() {
             }
         }, true)
 
-        // Tab change listener for pausing/resuming Feed video
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
@@ -117,11 +117,10 @@ class MainActivity : AppCompatActivity() {
         (currentFragment as? FeedFragment)?.pauseCurrentVideo()
     }
 
-    // File access permission
     private fun requestAllFileAccessPermissionFirst() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
             try {
-                val uri = Uri.parse("package:$packageName")
+                val uri = "package:$packageName".toUri()
                 val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, uri)
                 startActivity(intent)
             } catch (e: ActivityNotFoundException) {
@@ -160,10 +159,10 @@ class MainActivity : AppCompatActivity() {
                 currentPermissionIndex++
                 requestNextPermission()
             } else {
-                Toast.makeText(this, "Permission ${permissions[0]} is required.", Toast.LENGTH_SHORT).show()
+               // Toast.makeText(this, "Permission ${permissions[0]} is required.", Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(this, "Permission request interrupted.", Toast.LENGTH_SHORT).show()
+          //  Toast.makeText(this, "Permission request interrupted.", Toast.LENGTH_SHORT).show()
         }
     }
 }
