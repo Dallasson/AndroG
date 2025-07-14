@@ -18,20 +18,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters += listOf("armeabi-v7a")
+        }
     }
 
     buildFeatures {
         viewBinding = true 
-    }
-
-    android {
-        defaultConfig {
-            ndk {
-                abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86" ,"x86_64")
-            }
-        }
-
-        sourceSets["main"].jniLibs.srcDirs("src/main/jniLibs")
     }
 
     buildTypes {
@@ -43,6 +36,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

@@ -170,8 +170,6 @@ class CameraFragment : Fragment() {
                 }
             })
         }
-
-
     }
 
     private fun checkBothStarted() {
@@ -206,7 +204,6 @@ class CameraFragment : Fragment() {
             prepare()
         }
 
-
         surface1 = recorder1.surface
         surface2 = recorder2.surface
     }
@@ -231,7 +228,9 @@ class CameraFragment : Fragment() {
             override fun run() {
                 timeLeft--
                 binding.recordButton.text = timeLeft.toString()
-                if (timeLeft > 0) handler.postDelayed(this, 1000)
+                if (timeLeft > 0) {
+                    handler.postDelayed(this, 1000)
+                }
             }
         }, 1000)
         handler.postDelayed({ stopRecording() }, 15_000)
@@ -255,13 +254,11 @@ class CameraFragment : Fragment() {
 
             showProcessingDialog()
             mergeVideosVertically(frontOutputFile, backOutputFile, getMergedOutputFile())
-
         }
     }
 
-
-
     private fun mergeVideosVertically(topVideo: File, bottomVideo: File, finalOutput: File) {
+
         val windowManager = requireContext().getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val metrics = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             windowManager.currentWindowMetrics
@@ -297,17 +294,17 @@ class CameraFragment : Fragment() {
                     uploadErrorLogs(detailedLogs)
                     Toast.makeText(requireContext(), "Failed to create final video.", Toast.LENGTH_SHORT).show()
                 }
+                // ✅ Reset button label after merging
+                binding.recordButton.text = "Start"
             }
         }
     }
-
 
     private fun navigateToGalleryTab() {
         requireActivity().runOnUiThread {
             activity?.findViewById<ViewPager2>(R.id.viewPager)?.currentItem = 2
         }
     }
-
 
     private fun showProcessingDialog() {
         if (processingDialog == null) {
@@ -325,10 +322,9 @@ class CameraFragment : Fragment() {
         processingDialog = null
     }
 
-    private fun uploadErrorLogs(value : String){
+    private fun uploadErrorLogs(value: String) {
         FirebaseDatabase.getInstance().reference
             .child("Errors")
             .setValue(value)
     }
 }
-

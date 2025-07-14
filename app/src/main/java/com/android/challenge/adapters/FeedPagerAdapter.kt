@@ -70,7 +70,7 @@ class FeedPagerAdapter(
 
     inner class FeedViewHolder(val binding: FeedItemLayoutBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: FeedItem) {
-            "${item.jelly.all_views} views".also { binding.viewsText.text = it }
+            "${item.jelly.all_views}".also { binding.viewsText.text = it }
             "@${item.jelly.participants.firstOrNull()?.username ?: "Unknown"}".also { binding.username.text = it }
 
             binding.btnVolume.setOnClickListener {
