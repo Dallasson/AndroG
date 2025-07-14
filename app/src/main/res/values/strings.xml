@@ -1,5 +1,14 @@
 <resources>
-    <string name="app_name">Android Engineering Challenge</string>
+    <string name="app_name">Challenge</string>
     <string name="no_videos_found">No videos found</string>
-    <string name="video_thumbnail" />
+    <string name="video_name">Video Name</string>
+    <string name="video_thumbnail">Video Thumbnail</string>
+    <string name="_15">15</string>
+    <string name="jellyjelly">JELLYJELLY</string>
+    <string name="_0_views">0 views</string>
+    <string name="volume">Volume</string>
+    <string name="share_to_twitter">Share to Twitter</string>
+    <string name="copy_link">Copy Link</string>
+    <string name="no_reels_icon">No Reels Icon</string>
+    <string name="no_reels_found">No Reels Found</string>
 </resources>

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/feedRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -12,7 +14,7 @@
         android:clipToPadding="false"
         android:scrollbars="vertical" />
 
-    <!-- No Feed Layout -->
+
     <LinearLayout
         android:id="@+id/noVideosLayout"
         android:layout_width="match_parent"
@@ -20,22 +22,25 @@
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone"
-        android:padding="24dp">
+        android:padding="24dp"
+        tools:ignore="UseCompoundDrawables">
 
         <ImageView
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:src="@drawable/no_video"
-            android:contentDescription="@string/no_videos_found" />
+            android:contentDescription="@string/no_videos_found"
+            app:tint="@color/white" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/no_videos_found"
+            android:fontFamily="@font/font"
             android:textSize="18sp"
             android:textStyle="bold"
             android:paddingTop="16dp"
-            android:textColor="@android:color/darker_gray" />
+            android:textColor="@color/white" />
     </LinearLayout>
 
 </FrameLayout>

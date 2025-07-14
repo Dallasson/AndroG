@@ -1,23 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- Split Preview Container -->
     <LinearLayout
         android:id="@+id/previewContainer"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Front Camera Preview (top half) -->
         <TextureView
             android:id="@+id/frontPreview"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Back Camera Preview (bottom half) -->
         <TextureView
             android:id="@+id/backPreview"
             android:layout_width="match_parent"
@@ -25,16 +23,22 @@
             android:layout_weight="1" />
     </LinearLayout>
 
-    <!-- Red Record Button with Timer -->
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/recordButton"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:layout_gravity="center"
-        android:text="15"
+        android:text="@string/_15"
+        android:fontFamily="@font/font"
         android:textColor="#FFFFFF"
-        android:textSize="18sp"
-        android:backgroundTint="#FF0000"
-        android:elevation="10dp" />
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:backgroundTint="@null"
+        app:cornerRadius="40dp"
+        app:backgroundTint="@null"
+        android:background="@drawable/record_button_bg"
+        android:elevation="12dp" />
+
+
 
 </FrameLayout>

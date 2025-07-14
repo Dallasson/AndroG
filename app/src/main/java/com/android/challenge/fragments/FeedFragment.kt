@@ -70,11 +70,16 @@ class FeedFragment : Fragment(), LifecycleEventObserver {
                 viewModel.videos.collect { response ->
                     response?.let {
                         val shuffledFeed = it.feed.shuffled()
-                        adapter.setItems(shuffledFeed)
-                        binding.recyclerView.post {
-                            adapter.bindPlayerTo(0)
+                        if (shuffledFeed.isEmpty()) {
+                            showEmptyView(true)
+                        } else {
+                            showEmptyView(false)
+                            adapter.setItems(shuffledFeed)
+                            binding.recyclerView.post {
+                                adapter.bindPlayerTo(0)
+                            }
                         }
-                    }
+                    } ?: showEmptyView(true)
                 }
             }
         }
@@ -116,4 +121,10 @@ class FeedFragment : Fragment(), LifecycleEventObserver {
             adapter.bindPlayerTo(position)
         }
     }
+
+    private fun showEmptyView(show: Boolean) {
+        binding.emptyView.visibility = if (show) View.VISIBLE else View.GONE
+        binding.recyclerView.visibility = if (show) View.GONE else View.VISIBLE
+    }
 }
+

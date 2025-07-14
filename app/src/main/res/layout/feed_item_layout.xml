@@ -6,14 +6,14 @@
     android:layout_height="match_parent"
     android:background="#000">
 
-    <!-- Fullscreen ExoPlayer View -->
+
     <androidx.media3.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@android:color/black" />
 
-    <!-- Top bar: JellyJelly label and views -->
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -28,7 +28,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="JELLYJELLY"
+            android:text="@string/jellyjelly"
+            android:fontFamily="@font/font"
             android:textColor="@android:color/white"
             android:textStyle="bold"
             android:textSize="20sp"
@@ -41,8 +42,9 @@
             android:id="@+id/viewsText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="0 views"
+            android:text="@string/_0_views"
             android:textColor="@android:color/white"
+            android:fontFamily="@font/font"
             android:textSize="14sp"
             android:paddingStart="12dp"
             android:shadowColor="#80000000"
@@ -51,7 +53,7 @@
             android:shadowRadius="3" />
     </LinearLayout>
 
-    <!-- Username (bottom left) -->
+
     <TextView
         android:id="@+id/username"
         android:layout_width="wrap_content"
@@ -60,6 +62,7 @@
         android:layout_marginStart="20dp"
         android:layout_marginBottom="24dp"
         android:textColor="@android:color/white"
+        android:fontFamily="@font/font"
         android:textSize="16sp"
         android:textStyle="bold"
         android:shadowColor="#80000000"
@@ -67,7 +70,7 @@
         android:shadowDy="1"
         android:shadowRadius="3" />
 
-    <!-- Right-side icon stack -->
+
     <LinearLayout
         android:id="@+id/rightIcons"
         android:layout_width="wrap_content"
@@ -81,30 +84,30 @@
 
         <ImageView
             android:id="@+id/btnVolume"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_marginBottom="16dp"
             android:src="@drawable/sound_on"
-            android:contentDescription="Volume"
+            android:contentDescription="@string/volume"
             android:background="?android:selectableItemBackgroundBorderless"
             app:tint="@android:color/white" />
 
         <ImageView
             android:id="@+id/btnX"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_marginBottom="16dp"
             android:src="@drawable/x"
-            android:contentDescription="Share to Twitter"
+            android:contentDescription="@string/share_to_twitter"
             android:background="?android:selectableItemBackgroundBorderless"
             app:tint="@android:color/white" />
 
         <ImageView
             android:id="@+id/btnCopyLink"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:src="@drawable/link"
-            android:contentDescription="Copy Link"
+            android:contentDescription="@string/copy_link"
             android:background="?android:selectableItemBackgroundBorderless"
             app:tint="@android:color/white" />
     </LinearLayout>
