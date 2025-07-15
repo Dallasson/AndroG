@@ -292,19 +292,31 @@ class CameraFragment : Fragment() {
         val metrics = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             windowManager.currentWindowMetrics
         } else {
-            TODO("VERSION.SDK_INT < R")
+            TODO("VERSION.SDK_INT < R: Implement fallback for screen metrics")
         }
+
         val screenWidth = metrics.bounds.width()
         val screenHeight = metrics.bounds.height()
         val targetWidth = screenWidth - (screenWidth % 2)
         val targetHeight = (screenHeight / 2) - ((screenHeight / 2) % 2)
 
+
+        val videoBitrate = "120000k"
+
         val command = "-i ${topVideo.absolutePath} -i ${bottomVideo.absolutePath} " +
                 "-filter_complex \"" +
-                "[0:v]transpose=2,hflip,scale=${targetWidth}:${targetHeight}[top];" +
-                "[1:v]transpose=1,scale=${targetWidth}:${targetHeight}[bottom];" +
+                "[0:v]scale=${targetWidth}:${targetHeight},transpose=2,hflip[top];" + // Apply scale before transpose if aspect ratio needs to be maintained pre-transpose
+                "[1:v]scale=${targetWidth}:${targetHeight},transpose=1[bottom];" + // Apply scale before transpose
                 "[top][bottom]vstack=inputs=2,format=yuv420p[v]\" " +
-                "-map \"[v]\" -map 0:a? -c:a copy -c:v h264_mediacodec -preset ultrafast ${finalOutput.absolutePath}"
+                "-map \"[v]\" -map 0:a? " +
+                "-c:v h264_mediacodec " + // Use mediacodec for hardware acceleration
+                "-b:v $videoBitrate " + // Set the video bitrate explicitly
+                "-crf 23 " + // Constant Rate Factor: A common way to control quality with libx264. Lower is better quality, higher file size. (23 is a good default, 18 is visually lossless).
+                "-preset medium " + // A good balance between encoding speed and compression efficiency. 'ultrafast' sacrifices too much quality.
+                "-tune film " + // Tune for film content (optional, can sometimes improve quality for certain types of video)
+                "-pix_fmt yuv420p " + // Ensure correct pixel format for broad compatibility
+                "-c:a copy " + // Copy audio stream without re-encoding to preserve quality and speed.
+                "${finalOutput.absolutePath}"
 
         FFmpegKit.executeAsync(command) { session ->
             handler.post {
