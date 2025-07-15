@@ -47,7 +47,7 @@ android {
 }
 
 dependencies {
-
+    implementation(files("libs/spin.aar"))
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.fragment.ktx)
     implementation (libs.hilt.android)

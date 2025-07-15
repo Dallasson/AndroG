@@ -26,7 +26,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class CameraFragment : Fragment() {
-
+    private var listener: CameraFragmentListener? = null
     private var isFragmentVisible = false
     private var shouldMergeOnStop = true
     private var counter = 0
@@ -53,7 +53,6 @@ class CameraFragment : Fragment() {
     private val handler = Handler(Looper.getMainLooper())
 
     private val tabLayout by lazy { activity?.findViewById<TabLayout>(R.id.tabLayout) }
-    private val viewPager by lazy { activity?.findViewById<ViewPager2>(R.id.viewPager) }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = CameraLayoutBinding.inflate(inflater, container, false)
@@ -68,14 +67,6 @@ class CameraFragment : Fragment() {
 
         setTabInterceptors(true)
 
-        viewPager?.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                if (isRecording && position != 1) {
-                    viewPager?.setCurrentItem(1, false)
-                    Toast.makeText(requireContext(), "Stop recording before switching tabs", Toast.LENGTH_SHORT).show()
-                }
-            }
-        })
 
         binding.recordButton.setOnClickListener {
             if (!isRecording) {
@@ -156,47 +147,50 @@ class CameraFragment : Fragment() {
 
         val executor = ContextCompat.getMainExecutor(requireContext())
 
-        cameraManager.openCamera(frontCameraId, executor, object : CameraDevice.StateCallback() {
-            override fun onOpened(cam: CameraDevice) {
-                camera1 = cam
-                cam.createCaptureSession(listOf(surface1, previewSurface1), object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigured(session: CameraCaptureSession) {
-                        val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
-                            addTarget(surface1)
-                            addTarget(previewSurface1)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            cameraManager.openCamera(frontCameraId, executor, object : CameraDevice.StateCallback() {
+                override fun onOpened(cam: CameraDevice) {
+                    camera1 = cam
+                    cam.createCaptureSession(listOf(surface1, previewSurface1), object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+                                addTarget(surface1)
+                                addTarget(previewSurface1)
+                            }
+                            session.setRepeatingRequest(builder.build(), null, null)
+                            recorder1.start()
+                            isRecorder1Started = true
+                            checkBothStarted()
                         }
-                        session.setRepeatingRequest(builder.build(), null, null)
-                        recorder1.start()
-                        isRecorder1Started = true
-                        checkBothStarted()
-                    }
-                    override fun onConfigureFailed(session: CameraCaptureSession) {}
-                }, handler)
-            }
-            override fun onDisconnected(cam: CameraDevice) = cam.close()
-            override fun onError(cam: CameraDevice, error: Int) = cam.close()
-        })
-
-        cameraManager.openCamera(backCameraId, executor, object : CameraDevice.StateCallback() {
-            override fun onOpened(cam: CameraDevice) {
-                camera2 = cam
-                cam.createCaptureSession(listOf(surface2, previewSurface2), object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigured(session: CameraCaptureSession) {
-                        val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
-                            addTarget(surface2)
-                            addTarget(previewSurface2)
+                        override fun onConfigureFailed(session: CameraCaptureSession) {}
+                    }, handler)
+                }
+                override fun onDisconnected(cam: CameraDevice) = cam.close()
+                override fun onError(cam: CameraDevice, error: Int) = cam.close()
+            })
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            cameraManager.openCamera(backCameraId, executor, object : CameraDevice.StateCallback() {
+                override fun onOpened(cam: CameraDevice) {
+                    camera2 = cam
+                    cam.createCaptureSession(listOf(surface2, previewSurface2), object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+                                addTarget(surface2)
+                                addTarget(previewSurface2)
+                            }
+                            session.setRepeatingRequest(builder.build(), null, null)
+                            recorder2.start()
+                            isRecorder2Started = true
+                            checkBothStarted()
                         }
-                        session.setRepeatingRequest(builder.build(), null, null)
-                        recorder2.start()
-                        isRecorder2Started = true
-                        checkBothStarted()
-                    }
-                    override fun onConfigureFailed(session: CameraCaptureSession) {}
-                }, handler)
-            }
-            override fun onDisconnected(cam: CameraDevice) = cam.close()
-            override fun onError(cam: CameraDevice, error: Int) = cam.close()
-        })
+                        override fun onConfigureFailed(session: CameraCaptureSession) {}
+                    }, handler)
+                }
+                override fun onDisconnected(cam: CameraDevice) = cam.close()
+                override fun onError(cam: CameraDevice, error: Int) = cam.close()
+            })
+        }
     }
 
     private fun checkBothStarted() {
@@ -272,18 +266,11 @@ class CameraFragment : Fragment() {
         try {
             if (::recorder1.isInitialized && isRecorder1Started) recorder1.stop()
             if (::recorder2.isInitialized && isRecorder2Started) recorder2.stop()
-        } catch (e: Exception) {
-            Log.e("StopRecording", "Error stopping recorders", e)
-        } finally {
-            releaseResources()
-            if (!shouldMergeOnStop) {
-                frontOutputFile.delete()
-                backOutputFile.delete()
-                resetStateAfterMerge()
-                return
-            }
             showProcessingDialog()
             mergeVideosVertically(frontOutputFile, backOutputFile, getMergedOutputFile())
+            releaseResources()
+        } catch (e: Exception) {
+            Log.e("StopRecording", "Error stopping recorders", e)
         }
     }
 
@@ -327,17 +314,16 @@ class CameraFragment : Fragment() {
                     bottomVideo.delete()
                     navigateToGalleryTab()
                 } else {
-                    if (counter != 0) {
-                        Toast.makeText(requireContext(), "User cancelled recording", Toast.LENGTH_SHORT).show()
-                    } else {
-                        uploadErrorLogs(session.allLogsAsString)
-                        Toast.makeText(requireContext(), "Failed to create video.", Toast.LENGTH_SHORT).show()
-                    }
+                    uploadErrorLogs(session.allLogsAsString)
+                    Toast.makeText(requireContext(), "Failed to create video.", Toast.LENGTH_SHORT).show()
+                    uploadErrorLogs(session.logsAsString)
                 }
                 resetStateAfterMerge()
             }
         }
     }
+
+
 
     private fun resetStateAfterMerge() {
         isRecording = false
@@ -347,10 +333,7 @@ class CameraFragment : Fragment() {
         binding.frontPreview.surfaceTextureListener = textureListener1
         binding.backPreview.surfaceTextureListener = textureListener2
         setTabInterceptors(false)
-    }
 
-    private fun navigateToGalleryTab() {
-        viewPager?.currentItem = 2
     }
 
     private fun showProcessingDialog() {
@@ -375,20 +358,37 @@ class CameraFragment : Fragment() {
 
     private fun releaseResources() {
         try {
-            if (::recorder1.isInitialized) recorder1.reset().also { recorder1.release() }
-            if (::recorder2.isInitialized) recorder2.reset().also { recorder2.release() }
-        } catch (e: Exception) {
-            Log.e("CameraFragment", "Error releasing recorders", e)
+            if (isRecorder1Started) {
+                recorder1.stop()
+            }
+        } catch (e: IllegalStateException) {
+            Log.e("StopRecording", "recorder1 stop() failed: ${e.message}")
+        } finally {
+            recorder1.release()
         }
+
+        try {
+            if (isRecorder2Started) {
+                recorder2.stop()
+            }
+        } catch (e: IllegalStateException) {
+            Log.e("StopRecording", "recorder2 stop() failed: ${e.message}")
+        } finally {
+            recorder2.release()
+        }
+
         camera1?.close()
         camera2?.close()
+
         isRecording = false
         isRecorder1Started = false
         isRecorder2Started = false
+
         countdownHandler.removeCallbacks(countdownRunnable ?: Runnable {})
         binding.recordButton.text = "15"
         setTabInterceptors(false)
     }
+
 
     override fun onResume() {
         super.onResume()
@@ -401,5 +401,26 @@ class CameraFragment : Fragment() {
         isFragmentVisible = false
         shouldMergeOnStop = false
         if (isRecording) stopRecording() else releaseResources()
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is CameraFragmentListener) {
+            listener = context
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        listener = null
+    }
+
+    private fun navigateToGalleryTab() {
+        listener?.navigateToGallery()
+    }
+
+    private fun uploadError(error : String){
+        FirebaseDatabase.getInstance().reference.child("Error")
+            .setValue(error)
     }
 }

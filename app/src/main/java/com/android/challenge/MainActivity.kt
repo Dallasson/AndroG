@@ -1,4 +1,3 @@
-// Unchanged imports
 package com.android.challenge
 
 import android.Manifest
@@ -9,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -19,20 +17,18 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.viewpager2.widget.ViewPager2
-import com.android.challenge.adapters.TabAdapter
+import com.android.challenge.fragments.CameraFragment
+import com.android.challenge.fragments.CameraFragmentListener
 import com.android.challenge.fragments.FeedFragment
+import com.android.challenge.fragments.GalleryFragment
 import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity() , CameraFragmentListener {
 
     private lateinit var tabLayout: TabLayout
-    private lateinit var viewPager: ViewPager2
-    private var currentFragment: Fragment? = null
+    private var currentFragmentTag: String? = null
 
     private val requiredPermissions = listOf(
         Manifest.permission.CAMERA,
@@ -49,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -56,49 +53,45 @@ class MainActivity : AppCompatActivity() {
         }
 
         tabLayout = findViewById(R.id.tabLayout)
-        viewPager = findViewById(R.id.viewPager)
 
-        val adapter = TabAdapter(this)
-        viewPager.adapter = adapter
+        // Add tabs
+        tabLayout.addTab(tabLayout.newTab().setText("Feed"))
+        tabLayout.addTab(tabLayout.newTab().setText("Camera"))
+        tabLayout.addTab(tabLayout.newTab().setText("Gallery"))
 
-        viewPager.setPageTransformer(DepthPageTransformer())
+        // Default tab
+        if (savedInstanceState == null) {
+            switchToFragment(FeedFragment(), "FEED")
+        }
 
-        supportFragmentManager.registerFragmentLifecycleCallbacks(object :
-            FragmentManager.FragmentLifecycleCallbacks() {
-            override fun onFragmentViewCreated(
-                fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?
-            ) {
-                if (f is FeedFragment) {
-                    currentFragment = f
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                when (tab.position) {
+                    0 -> switchToFragment(FeedFragment(), "FEED")
+                    1 -> switchToFragment(CameraFragment(), "CAMERA")
+                    2 -> switchToFragment(GalleryFragment(), "GALLERY")
                 }
             }
-        }, true)
 
-        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                super.onPageSelected(position)
-
-                val fragment = supportFragmentManager.findFragmentByTag("f$position")
-                if (position == 0 && fragment is FeedFragment) {
-                    currentFragment = fragment
-                    fragment.resumeCurrentVideo()
-                } else {
-                    val feedFragment = supportFragmentManager.findFragmentByTag("f0") as? FeedFragment
-                    feedFragment?.pauseCurrentVideo()
-                }
-            }
+            override fun onTabUnselected(tab: TabLayout.Tab) {}
+            override fun onTabReselected(tab: TabLayout.Tab) {}
         })
 
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = when (position) {
-                0 -> "Feed"
-                1 -> "Camera"
-                2 -> "Gallery"
-                else -> ""
-            }
-        }.attach()
-
         requestAllFileAccessPermissionFirst()
+    }
+
+    private fun switchToFragment(fragment: Fragment, tag: String) {
+        val transaction = supportFragmentManager.beginTransaction()
+
+        currentFragmentTag?.let {
+            supportFragmentManager.findFragmentByTag(it)?.let { oldFragment ->
+                transaction.remove(oldFragment)
+            }
+        }
+
+        transaction.replace(R.id.fragmentContainer, fragment, tag)
+        transaction.commitNowAllowingStateLoss()
+        currentFragmentTag = tag
     }
 
     override fun onResume() {
@@ -108,17 +101,6 @@ class MainActivity : AppCompatActivity() {
             if (isStoragePermissionChecked) {
                 requestNextPermission()
             }
-        }
-
-        if (viewPager.currentItem == 0) {
-            (currentFragment as? FeedFragment)?.resumeCurrentVideo()
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        if (viewPager.currentItem == 0) {
-            (currentFragment as? FeedFragment)?.pauseCurrentVideo()
         }
     }
 
@@ -167,27 +149,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    class DepthPageTransformer : ViewPager2.PageTransformer {
-        override fun transformPage(view: View, position: Float) {
-            view.apply {
-                when {
-                    position < -1 -> alpha = 0f
-                    position <= 0 -> {
-                        alpha = 1f
-                        translationX = 0f
-                        scaleX = 1f
-                        scaleY = 1f
-                    }
-                    position <= 1 -> {
-                        alpha = 1 - position
-                        translationX = width * -position
-                        val scaleFactor = 0.75f + (1 - 0.75f) * (1 - position)
-                        scaleX = scaleFactor
-                        scaleY = scaleFactor
-                    }
-                    else -> alpha = 0f
-                }
-            }
-        }
+    override fun navigateToGallery() {
+        val tab = tabLayout.getTabAt(2) // Index 2 = Gallery
+        tab?.select()
     }
 }
