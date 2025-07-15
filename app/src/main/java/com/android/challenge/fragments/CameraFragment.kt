@@ -422,8 +422,5 @@ class CameraFragment : Fragment() {
         listener?.navigateToGallery()
     }
 
-    private fun uploadError(error : String){
-        FirebaseDatabase.getInstance().reference.child("Error")
-            .setValue(error)
-    }
+
 }
