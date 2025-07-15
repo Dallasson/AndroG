@@ -11,7 +11,7 @@
 -  Merging of two video streams using **FFmpeg** vertically
 -  Gallery view to explore recorded videos
 -  Feed tab that mimics TikTok-style vertical scrolling using `RecyclerView` and `ExoPlayer`
--  ive data observation via MVVM and Kotlin Coroutines
+-  Live data observation via MVVM and Kotlin Coroutines
 -  Robust error handling with UI feedback
 -  Clean UI with Material Design components
 
