@@ -40,12 +40,8 @@
 - Disables tab navigation during recording to avoid UI issues.
 - On stop, initiates video flipping and merging using FFmpegKit.
 
-### `ManualVideoMerger.kt`
-- Custom class that decodes two input MP4 files, draws them onto a canvas using `CanvasRenderer`, and re-encodes them into a single output file.
-- Used when fine control over frame rendering is required instead of raw FFmpeg merge.
-
 ### `FeedFragment.kt`
-- Parses videos from `https://jellyjelly.com/feed` using **Jsoup**.
+- Parses videos from `https://jellyjelly.com/feed` using Retrofit
 - Loads and plays videos using `ExoPlayer` inside a vertical `RecyclerView`.
 - Handles swipe gestures and video lifecycle.
 
@@ -61,7 +57,7 @@
 
 ### `JellyViewModel.kt`
 - Manages fetching and exposing feed data to the UI.
-- Parses video metadata (title, views, thumbnails, URLs) using HTML parsing via Jsoup.
+- Parses video metadata (title, views, thumbnails, URLs) using HTML parsing via Retrofit.
 - Uses Kotlin Flows and LiveData.
 
 ---
