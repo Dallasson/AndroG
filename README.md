@@ -1,4 +1,4 @@
-# AndroG
+# Android Challenge
 
  a dual-camera Android application that records simultaneously from both the front and back cameras, then merges the two video streams vertically into a single output. Built using modern Android development practices, it handles camera access, video recording, FFmpeg-based merging, and a custom vertical swipe video feed like TikTok.
 
