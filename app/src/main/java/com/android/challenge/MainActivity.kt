@@ -1,3 +1,4 @@
+// Unchanged imports
 package com.android.challenge
 
 import android.Manifest
@@ -60,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         val adapter = TabAdapter(this)
         viewPager.adapter = adapter
 
+        viewPager.setPageTransformer(DepthPageTransformer())
+
         supportFragmentManager.registerFragmentLifecycleCallbacks(object :
             FragmentManager.FragmentLifecycleCallbacks() {
             override fun onFragmentViewCreated(
@@ -114,7 +117,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        (currentFragment as? FeedFragment)?.pauseCurrentVideo()
+        if (viewPager.currentItem == 0) {
+            (currentFragment as? FeedFragment)?.pauseCurrentVideo()
+        }
     }
 
     private fun requestAllFileAccessPermissionFirst() {
@@ -158,11 +163,31 @@ class MainActivity : AppCompatActivity() {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 currentPermissionIndex++
                 requestNextPermission()
-            } else {
-                // Toast.makeText(this, "Permission ${permissions[0]} is required.", Toast.LENGTH_SHORT).show()
             }
-        } else {
-            // Toast.makeText(this, "Permission request interrupted.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    class DepthPageTransformer : ViewPager2.PageTransformer {
+        override fun transformPage(view: View, position: Float) {
+            view.apply {
+                when {
+                    position < -1 -> alpha = 0f
+                    position <= 0 -> {
+                        alpha = 1f
+                        translationX = 0f
+                        scaleX = 1f
+                        scaleY = 1f
+                    }
+                    position <= 1 -> {
+                        alpha = 1 - position
+                        translationX = width * -position
+                        val scaleFactor = 0.75f + (1 - 0.75f) * (1 - position)
+                        scaleX = scaleFactor
+                        scaleY = scaleFactor
+                    }
+                    else -> alpha = 0f
+                }
+            }
         }
     }
 }

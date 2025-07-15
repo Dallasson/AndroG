@@ -19,6 +19,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.android.challenge.R
 import com.android.challenge.databinding.CameraLayoutBinding
 import com.arthenica.ffmpegkit.FFmpegKit
+import com.google.android.material.tabs.TabLayout
 import com.google.firebase.database.FirebaseDatabase
 import java.io.File
 import java.text.SimpleDateFormat
@@ -26,6 +27,9 @@ import java.util.*
 
 class CameraFragment : Fragment() {
 
+    private var isFragmentVisible = false
+    private var shouldMergeOnStop = true
+    private var counter = 0
     private lateinit var binding: CameraLayoutBinding
     private lateinit var cameraManager: CameraManager
     private lateinit var recorder1: MediaRecorder
@@ -43,8 +47,13 @@ class CameraFragment : Fragment() {
     private var isRecorder1Started = false
     private var isRecorder2Started = false
     private var processingDialog: AlertDialog? = null
-
+    private var timeLeft = 15
+    private var countdownRunnable: Runnable? = null
+    private var countdownHandler = Handler(Looper.getMainLooper())
     private val handler = Handler(Looper.getMainLooper())
+
+    private val tabLayout by lazy { activity?.findViewById<TabLayout>(R.id.tabLayout) }
+    private val viewPager by lazy { activity?.findViewById<ViewPager2>(R.id.viewPager) }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         binding = CameraLayoutBinding.inflate(inflater, container, false)
@@ -56,9 +65,46 @@ class CameraFragment : Fragment() {
         cameraManager = requireContext().getSystemService(Context.CAMERA_SERVICE) as CameraManager
         binding.frontPreview.surfaceTextureListener = textureListener1
         binding.backPreview.surfaceTextureListener = textureListener2
+
+        setTabInterceptors(true)
+
+        viewPager?.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                if (isRecording && position != 1) {
+                    viewPager?.setCurrentItem(1, false)
+                    Toast.makeText(requireContext(), "Stop recording before switching tabs", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+
         binding.recordButton.setOnClickListener {
             if (!isRecording) {
+                shouldMergeOnStop = true
                 startDualCameraRecording()
+            } else {
+                shouldMergeOnStop = false
+                stopRecording()
+            }
+        }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setTabInterceptors(enable: Boolean) {
+        tabLayout?.let { tabs ->
+            for (i in 0 until tabs.tabCount) {
+                val tabView = tabs.getTabAt(i)?.view
+                if (enable) {
+                    tabView?.setOnTouchListener { _, _ ->
+                        if (isRecording) {
+                            Toast.makeText(requireContext(), "Stop recording before switching tabs", Toast.LENGTH_SHORT).show()
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                } else {
+                    tabView?.setOnTouchListener(null)
+                }
             }
         }
     }
@@ -68,7 +114,6 @@ class CameraFragment : Fragment() {
             texture.setDefaultBufferSize(1920, 1080)
             previewSurface1 = Surface(texture)
         }
-
         override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) {}
         override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean = true
         override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {}
@@ -79,7 +124,6 @@ class CameraFragment : Fragment() {
             texture.setDefaultBufferSize(1920, 1080)
             previewSurface2 = Surface(texture)
         }
-
         override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) {}
         override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean = true
         override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {}
@@ -98,11 +142,9 @@ class CameraFragment : Fragment() {
         val frontCameraId = cameraManager.cameraIdList.firstOrNull {
             cameraManager.getCameraCharacteristics(it).get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT
         }
-
         val backCameraId = cameraManager.cameraIdList.firstOrNull {
             cameraManager.getCameraCharacteristics(it).get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
         }
-
         if (frontCameraId == null || backCameraId == null) {
             Toast.makeText(requireContext(), "Both front and back cameras are required", Toast.LENGTH_SHORT).show()
             return
@@ -114,67 +156,53 @@ class CameraFragment : Fragment() {
 
         val executor = ContextCompat.getMainExecutor(requireContext())
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            cameraManager.openCamera(frontCameraId, executor, object : CameraDevice.StateCallback() {
-                override fun onOpened(cam: CameraDevice) {
-                    camera1 = cam
-                    cam.createCaptureSession(listOf(surface1, previewSurface1), object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
-                                addTarget(surface1)
-                                addTarget(previewSurface1)
-                            }
-                            session.setRepeatingRequest(builder.build(), null, null)
-                            recorder1.start()
-                            isRecorder1Started = true
-                            checkBothStarted()
+        cameraManager.openCamera(frontCameraId, executor, object : CameraDevice.StateCallback() {
+            override fun onOpened(cam: CameraDevice) {
+                camera1 = cam
+                cam.createCaptureSession(listOf(surface1, previewSurface1), object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+                            addTarget(surface1)
+                            addTarget(previewSurface1)
                         }
+                        session.setRepeatingRequest(builder.build(), null, null)
+                        recorder1.start()
+                        isRecorder1Started = true
+                        checkBothStarted()
+                    }
+                    override fun onConfigureFailed(session: CameraCaptureSession) {}
+                }, handler)
+            }
+            override fun onDisconnected(cam: CameraDevice) = cam.close()
+            override fun onError(cam: CameraDevice, error: Int) = cam.close()
+        })
 
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            Toast.makeText(requireContext(), "Failed to configure front camera", Toast.LENGTH_SHORT).show()
+        cameraManager.openCamera(backCameraId, executor, object : CameraDevice.StateCallback() {
+            override fun onOpened(cam: CameraDevice) {
+                camera2 = cam
+                cam.createCaptureSession(listOf(surface2, previewSurface2), object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
+                            addTarget(surface2)
+                            addTarget(previewSurface2)
                         }
-                    }, handler)
-                }
-
-                override fun onDisconnected(cam: CameraDevice) = cam.close()
-                override fun onError(cam: CameraDevice, error: Int) {
-                    cam.close()
-                    Toast.makeText(requireContext(), "Front camera error: $error", Toast.LENGTH_SHORT).show()
-                }
-            })
-            cameraManager.openCamera(backCameraId, executor, object : CameraDevice.StateCallback() {
-                override fun onOpened(cam: CameraDevice) {
-                    camera2 = cam
-                    cam.createCaptureSession(listOf(surface2, previewSurface2), object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            val builder = cam.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
-                                addTarget(surface2)
-                                addTarget(previewSurface2)
-                            }
-                            session.setRepeatingRequest(builder.build(), null, null)
-                            recorder2.start()
-                            isRecorder2Started = true
-                            checkBothStarted()
-                        }
-
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            Toast.makeText(requireContext(), "Failed to configure back camera", Toast.LENGTH_SHORT).show()
-                        }
-                    }, handler)
-                }
-
-                override fun onDisconnected(cam: CameraDevice) = cam.close()
-                override fun onError(cam: CameraDevice, error: Int) {
-                    cam.close()
-                    Toast.makeText(requireContext(), "Back camera error: $error", Toast.LENGTH_SHORT).show()
-                }
-            })
-        }
+                        session.setRepeatingRequest(builder.build(), null, null)
+                        recorder2.start()
+                        isRecorder2Started = true
+                        checkBothStarted()
+                    }
+                    override fun onConfigureFailed(session: CameraCaptureSession) {}
+                }, handler)
+            }
+            override fun onDisconnected(cam: CameraDevice) = cam.close()
+            override fun onError(cam: CameraDevice, error: Int) = cam.close()
+        })
     }
 
     private fun checkBothStarted() {
         if (isRecorder1Started && isRecorder2Started && !isRecording) {
             isRecording = true
+            setTabInterceptors(true)
             startCountdown()
         }
     }
@@ -192,7 +220,6 @@ class CameraFragment : Fragment() {
             setVideoFrameRate(30)
             prepare()
         }
-
         recorder2 = MediaRecorder().apply {
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -203,7 +230,6 @@ class CameraFragment : Fragment() {
             setVideoFrameRate(30)
             prepare()
         }
-
         surface1 = recorder1.surface
         surface2 = recorder2.surface
     }
@@ -222,43 +248,46 @@ class CameraFragment : Fragment() {
     }
 
     private fun startCountdown() {
-        var timeLeft = 15
-        binding.recordButton.text = timeLeft.toString()
-        handler.postDelayed(object : Runnable {
+        timeLeft = 15
+        binding.recordButton.text = "15"
+        countdownRunnable = object : Runnable {
             override fun run() {
                 timeLeft--
-                binding.recordButton.text = timeLeft.toString()
+                counter = timeLeft
                 if (timeLeft > 0) {
-                    handler.postDelayed(this, 1000)
+                    binding.recordButton.text = "$timeLeft"
+                    countdownHandler.postDelayed(this, 1000)
                 }
             }
-        }, 1000)
-        handler.postDelayed({ stopRecording() }, 15_000)
+        }
+        countdownHandler.postDelayed(countdownRunnable!!, 1000)
+        handler.postDelayed({
+            shouldMergeOnStop = true
+            stopRecording()
+        }, 15_000)
     }
 
     private fun stopRecording() {
+        countdownHandler.removeCallbacks(countdownRunnable ?: Runnable {})
         try {
             if (::recorder1.isInitialized && isRecorder1Started) recorder1.stop()
             if (::recorder2.isInitialized && isRecorder2Started) recorder2.stop()
         } catch (e: Exception) {
             Log.e("StopRecording", "Error stopping recorders", e)
         } finally {
-            recorder1.release()
-            recorder2.release()
-
-            camera1?.close()
-            camera2?.close()
-            isRecording = false
-            isRecorder1Started = false
-            isRecorder2Started = false
-
+            releaseResources()
+            if (!shouldMergeOnStop) {
+                frontOutputFile.delete()
+                backOutputFile.delete()
+                resetStateAfterMerge()
+                return
+            }
             showProcessingDialog()
             mergeVideosVertically(frontOutputFile, backOutputFile, getMergedOutputFile())
         }
     }
 
     private fun mergeVideosVertically(topVideo: File, bottomVideo: File, finalOutput: File) {
-
         val windowManager = requireContext().getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val metrics = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             windowManager.currentWindowMetrics
@@ -270,15 +299,12 @@ class CameraFragment : Fragment() {
         val targetWidth = screenWidth - (screenWidth % 2)
         val targetHeight = (screenHeight / 2) - ((screenHeight / 2) % 2)
 
-        val command =
-            "-i ${topVideo.absolutePath} -i ${bottomVideo.absolutePath} " +
-                    "-filter_complex \"" +
-                    "[0:v]transpose=2,hflip,scale=${targetWidth}:${targetHeight}[top];" +
-                    "[1:v]transpose=1,scale=${targetWidth}:${targetHeight}[bottom];" +
-                    "[top][bottom]vstack=inputs=2" +
-                    ",format=yuv420p[v]\" " +
-                    "-map \"[v]\" -map 0:a? -c:a copy " +
-                    "-c:v h264_mediacodec -preset ultrafast ${finalOutput.absolutePath}"
+        val command = "-i ${topVideo.absolutePath} -i ${bottomVideo.absolutePath} " +
+                "-filter_complex \"" +
+                "[0:v]transpose=2,hflip,scale=${targetWidth}:${targetHeight}[top];" +
+                "[1:v]transpose=1,scale=${targetWidth}:${targetHeight}[bottom];" +
+                "[top][bottom]vstack=inputs=2,format=yuv420p[v]\" " +
+                "-map \"[v]\" -map 0:a? -c:a copy -c:v h264_mediacodec -preset ultrafast ${finalOutput.absolutePath}"
 
         FFmpegKit.executeAsync(command) { session ->
             handler.post {
@@ -289,21 +315,30 @@ class CameraFragment : Fragment() {
                     bottomVideo.delete()
                     navigateToGalleryTab()
                 } else {
-                    val detailedLogs = session.allLogsAsString
-                    Log.e("FFmpegMerge", "FFmpeg failed. Full logs: $detailedLogs")
-                    uploadErrorLogs(detailedLogs)
-                    Toast.makeText(requireContext(), "Failed to create final video.", Toast.LENGTH_SHORT).show()
+                    if (counter != 0) {
+                        Toast.makeText(requireContext(), "User cancelled recording", Toast.LENGTH_SHORT).show()
+                    } else {
+                        uploadErrorLogs(session.allLogsAsString)
+                        Toast.makeText(requireContext(), "Failed to create video.", Toast.LENGTH_SHORT).show()
+                    }
                 }
-                // ✅ Reset button label after merging
-                binding.recordButton.text = "Start"
+                resetStateAfterMerge()
             }
         }
     }
 
+    private fun resetStateAfterMerge() {
+        isRecording = false
+        isRecorder1Started = false
+        isRecorder2Started = false
+        binding.recordButton.text = "15"
+        binding.frontPreview.surfaceTextureListener = textureListener1
+        binding.backPreview.surfaceTextureListener = textureListener2
+        setTabInterceptors(false)
+    }
+
     private fun navigateToGalleryTab() {
-        requireActivity().runOnUiThread {
-            activity?.findViewById<ViewPager2>(R.id.viewPager)?.currentItem = 2
-        }
+        viewPager?.currentItem = 2
     }
 
     private fun showProcessingDialog() {
@@ -323,8 +358,36 @@ class CameraFragment : Fragment() {
     }
 
     private fun uploadErrorLogs(value: String) {
-        FirebaseDatabase.getInstance().reference
-            .child("Errors")
-            .setValue(value)
+        FirebaseDatabase.getInstance().reference.child("Errors").setValue(value)
+    }
+
+    private fun releaseResources() {
+        try {
+            if (::recorder1.isInitialized) recorder1.reset().also { recorder1.release() }
+            if (::recorder2.isInitialized) recorder2.reset().also { recorder2.release() }
+        } catch (e: Exception) {
+            Log.e("CameraFragment", "Error releasing recorders", e)
+        }
+        camera1?.close()
+        camera2?.close()
+        isRecording = false
+        isRecorder1Started = false
+        isRecorder2Started = false
+        countdownHandler.removeCallbacks(countdownRunnable ?: Runnable {})
+        binding.recordButton.text = "15"
+        setTabInterceptors(false)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        isFragmentVisible = true
+        shouldMergeOnStop = true
+    }
+
+    override fun onPause() {
+        super.onPause()
+        isFragmentVisible = false
+        shouldMergeOnStop = false
+        if (isRecording) stopRecording() else releaseResources()
     }
 }

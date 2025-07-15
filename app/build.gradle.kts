@@ -19,7 +19,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk {
-            abiFilters += listOf("armeabi-v7a")
+            abiFilters += listOf("armeabi-v7a","arm64-v8a")
         }
     }
 
@@ -47,13 +47,14 @@ android {
 }
 
 dependencies {
+
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.fragment.ktx)
     implementation (libs.hilt.android)
     kapt (libs.hilt.compiler)
+    implementation(libs.ffmpeg.kit.full)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
-    implementation(libs.ffmpeg.kit.full)
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.core.ktx)

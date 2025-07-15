@@ -14,7 +14,7 @@ import com.android.challenge.R
 import java.io.File
 
 class VideoAdapter(
-    private val videos: List<File>,
+    private var videos: List<File>,
     private val onClick: (uri: android.net.Uri) -> Unit
 ) : RecyclerView.Adapter<VideoAdapter.VideoViewHolder>() {
 
@@ -50,4 +50,9 @@ class VideoAdapter(
     }
 
     override fun getItemCount(): Int = videos.size
+
+    fun updateVideos(newVideos: List<File>) {
+        this.videos = newVideos
+        notifyDataSetChanged()
+    }
 }

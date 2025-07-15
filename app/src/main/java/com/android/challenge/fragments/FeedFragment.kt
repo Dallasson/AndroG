@@ -83,6 +83,8 @@ class FeedFragment : Fragment(), LifecycleEventObserver {
                 }
             }
         }
+
+
     }
 
     override fun onStart() {
