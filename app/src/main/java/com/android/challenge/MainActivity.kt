@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() , CameraFragmentListener {
         }
 
         transaction.replace(R.id.fragmentContainer, fragment, tag)
-        transaction.commitNowAllowingStateLoss()
+        transaction.commit()
         currentFragmentTag = tag
     }
 

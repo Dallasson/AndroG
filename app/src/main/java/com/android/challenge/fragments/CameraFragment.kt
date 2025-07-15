@@ -337,8 +337,11 @@ class CameraFragment : Fragment() {
     }
 
     private fun showProcessingDialog() {
+        val ctx = context ?: return
+
+
         if (processingDialog == null) {
-            processingDialog = AlertDialog.Builder(requireContext())
+            processingDialog = AlertDialog.Builder(ctx)
                 .setTitle("Processing")
                 .setMessage("Please wait while we process the videos...")
                 .setCancelable(false)
